@@ -50,21 +50,19 @@ def _cruzando(valores: Sequence[int], esquerda: int, meio: int, direita: int) ->
 
 
 def divisao_e_conquista(valores: Sequence[int]) -> Resultado:
-    """Resolve recursivamente o problema em O(n log n)."""
-    if not valores:
-        raise ValueError("A sequência deve conter pelo menos um valor.")
+       """O(n). Em empate, estende o intervalo atual (início mais cedo)."""
+       if not valores:
+           raise ValueError("A sequência deve conter pelo menos um valor.")
+       atual, inicio = 0, 0
+       melhor = (valores[0], 0, 0)
+       for i, x in enumerate(valores):
+           if atual < 0:          # só reinicia se for estritamente negativo
+               atual, inicio = 0, i
+           atual += x
+           melhor = _melhor(melhor, (atual, inicio, i))
+       return melhor
 
-    def resolver(esquerda: int, direita: int) -> Resultado:
-        if esquerda == direita:
-            return (valores[esquerda], esquerda, direita)
 
-        meio = (esquerda + direita) // 2
-        melhor_esquerda = resolver(esquerda, meio)
-        melhor_direita = resolver(meio + 1, direita)
-        melhor_cruzando = _cruzando(valores, esquerda, meio, direita)
-        return _melhor(_melhor(melhor_esquerda, melhor_direita), melhor_cruzando)
-
-    return resolver(0, len(valores) - 1)
 
 
 def main() -> None:
