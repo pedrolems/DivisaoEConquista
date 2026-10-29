@@ -1,5 +1,16 @@
-"""Subarranjo de soma máxima por força bruta e divisão e conquista."""
+"""Subarranjo de soma máxima por força bruta, divisão e conquista e Kadane.
 
+Uso:
+    python Sub_Soma_Max.py [fb|dc|kadane] < entrada.txt
+
+Entrada: n seguido de n inteiros (separados por espaço ou quebra de linha).
+Saída:   uma linha "soma inicio fim", com índices começando em 1.
+
+Regra de desempate (igual nas três versões): maior soma; em empate,
+o intervalo que começa primeiro; persistindo o empate, o mais curto.
+"""
+
+import sys
 from typing import Sequence, Tuple
 
 Resultado = Tuple[int, int, int]  # (soma, inicio, fim), índices internos 0-based
@@ -50,38 +61,76 @@ def _cruzando(valores: Sequence[int], esquerda: int, meio: int, direita: int) ->
 
 
 def divisao_e_conquista(valores: Sequence[int]) -> Resultado:
-       """O(n). Em empate, estende o intervalo atual (início mais cedo)."""
-       if not valores:
-           raise ValueError("A sequência deve conter pelo menos um valor.")
-       atual, inicio = 0, 0
-       melhor = (valores[0], 0, 0)
-       for i, x in enumerate(valores):
-           if atual < 0:          # só reinicia se for estritamente negativo
-               atual, inicio = 0, i
-           atual += x
-           melhor = _melhor(melhor, (atual, inicio, i))
-       return melhor
+    """Resolve recursivamente o problema em O(n log n).
+
+    T(n) = 2T(n/2) + Θ(n)  =>  T(n) = Θ(n log n)
+    """
+    if not valores:
+        raise ValueError("A sequência deve conter pelo menos um valor.")
+
+    def resolver(esquerda: int, direita: int) -> Resultado:
+        if esquerda == direita:
+            return (valores[esquerda], esquerda, direita)
+
+        meio = (esquerda + direita) // 2
+        melhor_esquerda = resolver(esquerda, meio)
+        melhor_direita = resolver(meio + 1, direita)
+        melhor_cruzando = _cruzando(valores, esquerda, meio, direita)
+        return _melhor(_melhor(melhor_esquerda, melhor_direita), melhor_cruzando)
+
+    return resolver(0, len(valores) - 1)
 
 
+def kadane(valores: Sequence[int]) -> Resultado:
+    """Versão O(n) (questão desafio).
+
+    Mantém a melhor soma de um intervalo que termina na posição atual.
+    Só reinicia quando a soma acumulada fica estritamente negativa; com
+    soma zero o intervalo é estendido, o que preserva o início mais cedo
+    exigido pela regra de desempate.
+    """
+    if not valores:
+        raise ValueError("A sequência deve conter pelo menos um valor.")
+
+    atual, inicio = 0, 0
+    melhor = (valores[0], 0, 0)
+    for i, x in enumerate(valores):
+        if atual < 0:
+            atual, inicio = 0, i
+        atual += x
+        melhor = _melhor(melhor, (atual, inicio, i))
+    return melhor
+
+
+ALGORITMOS = {
+    "fb": forca_bruta,
+    "dc": divisao_e_conquista,
+    "kadane": kadane,
+}
+
+
+def ler_entrada(texto: str) -> list:
+    """Converte o texto de entrada na lista de valores, validando n."""
+    dados = list(map(int, texto.split()))
+    if not dados:
+        raise ValueError("Entrada esperada: n seguido de n inteiros.")
+    n, *valores = dados
+    if n < 1 or len(valores) != n:
+        raise ValueError(f"Informe n >= 1 e exatamente {n} valores.")
+    return valores
 
 
 def main() -> None:
-    """Lê n e os n inteiros da entrada padrão e mostra os dois resultados."""
-    import sys
+    nome = sys.argv[1] if len(sys.argv) > 1 else "dc"
+    if nome not in ALGORITMOS:
+        raise SystemExit(f"Algoritmo inválido: {nome}. Use: {', '.join(ALGORITMOS)}")
+    try:
+        valores = ler_entrada(sys.stdin.read())
+    except ValueError as erro:
+        raise SystemExit(str(erro))
 
-    dados = list(map(int, sys.stdin.read().split()))
-    if not dados:
-        raise SystemExit("Entrada esperada: n seguido de n inteiros.")
-    n, *valores = dados
-    if n < 1 or len(valores) != n:
-        raise SystemExit(f"Informe n >= 1 e exatamente {n} valores.")
-
-    for nome, algoritmo in (
-        ("Força bruta", forca_bruta),
-        ("Divisão e conquista", divisao_e_conquista),
-    ):
-        soma, inicio, fim = algoritmo(valores)
-        print(f"{nome}: soma máxima = {soma}; início = {inicio + 1}; fim = {fim + 1}")
+    soma, inicio, fim = ALGORITMOS[nome](valores)
+    print(soma, inicio + 1, fim + 1)
 
 
 if __name__ == "__main__":
