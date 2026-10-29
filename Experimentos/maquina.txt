@@ -1,0 +1,7 @@
+Sistema: Linux-6.18.44-fc-v185-x86_64-with-glibc2.39
+Python: CPython 3.13.18
+CPU(s): 2
+Model name: Intel(R) Xeon(R) Processor @ 2.80GHz
+L2 cache: 2 MiB (2 instances)
+L3 cache: 33 MiB (1 instance)
+Memória: 7.8 GiB
